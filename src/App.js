@@ -42,8 +42,16 @@ const findMetaMaskAccount = async () => {
 
 const App = () => {
   const [currentAccount, setCurrentAccount] = useState("");
-  const [numberOfWaves, setNumberOfWaves] = useState(0);
-  const contractAddress = "0x8Cb870457bc95234519CDa44DcAfcCCE6847715a";
+  /*
+   * All state property to store all waves
+   */
+  const [allWaves, setAllWaves] = useState([]);
+  const [msg, setMsg] = useState("");
+  const contractAddress = "0xd0bbF838C3e7E3718BC60C9d78b9Bf71417070A6";
+
+  /*
+  * Create a variable here that references the abi content!
+  */
   const contractABI = abi.abi;
 
   const connectWallet = async () => {
@@ -80,15 +88,15 @@ const App = () => {
         /*
         * Execute the actual wave from your smart contract
         */
-        const waveTxn = await wavePortalContract.wave();
+        const waveTxn = await wavePortalContract.wave(msg);
         console.log("Mining...", waveTxn.hash);
 
         await waveTxn.wait();
         console.log("Mined -- ", waveTxn.hash);
 
-        count = await wavePortalContract.getTotalWaves();
-        console.log("Retrieved total wave count...", count.toNumber());
-        setNumberOfWaves(count.toNumber());
+        setMsg("");
+
+        getAllWaves();
       } else {
         console.log("Ethereum object doesn't exist!");
       }
@@ -97,6 +105,30 @@ const App = () => {
     }
   }
 
+
+  /*
+   * Create a method that gets all waves from your contract
+   */
+  const getAllWaves = async () => {
+    try {
+      const { ethereum } = window;
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const wavePortalContract = new ethers.Contract(contractAddress, contractABI, signer);
+
+        setAllWaves((await wavePortalContract.getAllWaves()).map(wave => ({
+          address: wave.waver,
+          timestamp: new Date(wave.timestamp * 1000),
+          message: wave.message
+        })));
+      } else {
+        console.log("Ethereum object doesn't exist!")
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
 
   /*
@@ -113,32 +145,41 @@ const App = () => {
     connectMetaMask();
   }, []);
 
+  function changeHandler(event) {
+    setMsg(event.target.value);
+  }
+
   return (
     <div className="mainContainer">
       <div className="dataContainer">
         <div className="header">
-          <span role="img" aria-label="Waving hand">👋</span> Hey there!
+          👋 Hey there!
         </div>
 
         <div className="bio">
-          I am Farza and I worked on self-driving cars so that's pretty cool
-          right? Connect your Ethereum wallet and wave at me!
+          I am farza and I worked on self-driving cars so that's pretty cool right? Connect your Ethereum wallet and wave at me!
         </div>
 
-        <h1>Number of Waves: {numberOfWaves}</h1>
+        <input type="text" placeholder="Wave something!" className="waveInput" onChange={changeHandler} value={msg} />
 
         <button className="waveButton" onClick={wave}>
           Wave at Me
         </button>
 
-        {/*
-         * If there is no currentAccount render this button
-         */}
         {!currentAccount && (
           <button className="waveButton" onClick={connectWallet}>
             Connect Wallet
           </button>
         )}
+
+        {allWaves.map((wave, index) => {
+          return (
+            <div key={index} style={{ backgroundColor: "OldLace", marginTop: "16px", padding: "8px" }}>
+              <div>Address: {wave.address}</div>
+              <div>Time: {wave.timestamp.toString()}</div>
+              <div>Message: {wave.message}</div>
+            </div>)
+        })}
       </div>
     </div>
   );
