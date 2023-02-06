@@ -47,7 +47,7 @@ const App = () => {
    */
   const [allWaves, setAllWaves] = useState([]);
   const [msg, setMsg] = useState("");
-  const contractAddress = "0xd0bbF838C3e7E3718BC60C9d78b9Bf71417070A6";
+  const contractAddress = "0x59A342fe1dC2c8d616a6cC3CBABEfBf22f64ea80";
 
   /*
   * Create a variable here that references the abi content!
